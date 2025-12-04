@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<!-- PWA Meta -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BatFlow">
+<meta name="theme-color" content="#3c7fb1">
+
+<!-- iOS home screen icons -->
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+
+<!-- Viewport (required for iOS PWAs) -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<title>BatFlow</title>
+
+<link rel="stylesheet" href="7.css">
+
+<link rel="stylesheet" href="style.css">
+
+<style>
+/* small inline safety styles to ensure consistent font rendering */
+body{font-family:"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial; margin:12px; background:var(--w7-surface)}
+.app { display:grid; grid-template-columns: 280px 1fr; gap:12px; height: calc(100vh - 24px); }
+.pane { padding:12px; border-radius:8px; background:var(--w7-el-bg); border:1px solid var(--w7-el-bd); backdrop-filter: blur(4px); }
+.header-row{display:flex;align-items:center;gap:10px}
+.kv { font-size:13px;color:var(--w7-subtle) }
+.small{font-size:13px}
+.icon-placeholder{width:20px;height:20px;border-radius:4px;border:1px dashed #bbb;display:inline-flex;align-items:center;justify-content:center;margin-right:8px}
+.controls-row{display:flex;gap:8px;align-items:center}
+.badge{font-size:12px;padding:4px 8px;border-radius:999px;background:rgba(0,0,0,0.04)}
+.commands-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cmd-tile{display:flex;gap:8px;align-items:flex-start;padding:8px;border-radius:6px;border:1px solid var(--w7-el-bd);background:var(--w7-el-bg-s-1);cursor:pointer;transition:transform .12s ease, box-shadow .12s ease}
+.cmd-tile:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.08)}
+.cmd-title{font-weight:700}
+.cmd-desc{font-size:12px;color:var(--w7-subtle);margin-top:4px}
+.workflow-list{display:flex;flex-direction:column;gap:8px}
+.step-row{display:flex;gap:12px;align-items:center;padding:10px;border-radius:8px;background:linear-gradient(#fff,#fbfbfb);border:1px solid #e6e6e6;transition:transform .12s ease,opacity .12s ease}
+.step-meta{flex:1}
+.step-actions{display:flex;gap:6px;flex-direction:column}
+.handle{cursor:grab;padding:6px;border-radius:4px}
+small.note{color:var(--w7-subtle);font-size:12px}
+.footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+</style>
+</head>
+<body>
+
+<div class="app" role="application" aria-label="BatFlow application">
+
+  <!-- SIDEBAR -->
+  <aside class="pane" id="sidebar" aria-label="Sidebar">
+    <div class="header-row">
+      <h3 style="margin:0">BatFlow</h3>
+      <div style="flex:1"></div>
+      <div class="kv">Steps <span id="stepCount" class="badge">0</span></div>
+    </div>
+
+    <p class="small">Organize and assemble .bat scripts visually. Click a command to add it. Drag steps to reorder.</p>
+
+    <hr/>
+
+    <strong>Commands</strong>
+    <div id="commands" class="commands-grid" style="margin-top:10px"></div>
+
+    <hr/>
+
+    <strong>Presets</strong>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <select id="presetSelect" class="kv" style="flex:1">
+        <option value="">— choose —</option>
+        <option value="helloWorld">Hello world</option>
+        <option value="echoInput">Echo input</option>
+        <option value="copyFile">Copy file</option>
+        <option value="askName">Ask name</option>
+      </select>
+      <button id="loadPresetBtn" class="btn">Load</button>
+    </div>
+
+    <hr/>
+
+    <strong>Project</strong>
+    <input id="projectName" placeholder="project-name" style="width:100%;margin-top:8px;padding:6px;border-radius:6px;border:1px solid #ccc">
+
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button id="exportBatBtn" class="btn primary">Export .bat</button>
+      <button id="saveJsonBtn" class="btn">Save .json</button>
+    </div>
+
+    <label class="btn" style="margin-top:8px;display:block;text-align:center">
+      Load .json
+      <input type="file" id="loadJsonInput" accept=".json" style="display:none">
+    </label>
+
+    <div style="margin-top:12px">
+      <label style="display:flex;gap:8px;align-items:center">
+        <input type="checkbox" id="autosaveToggle"> <span class="small">Autosave (localStorage)</span>
+      </label>
+      <small class="note">New projects include <code>@echo off</code> by default.</small>
+    </div>
+
+    <div style="margin-top:12px" class="small">Tip: add icons later by editing the command object `icon` property in <code>app.js</code>.</div>
+  </aside>
+
+  <!-- MAIN -->
+  <main style="display:flex;flex-direction:column;gap:12px">
+    <div class="pane" aria-label="Workflow pane">
+      <div style="display:flex;align-items:center;gap:12px">
+        <h4 style="margin:0">Workflow</h4>
+        <div style="flex:1"></div>
+        <button id="clearBtn" class="btn">Clear</button>
+      </div>
+
+      <div id="workflow" class="workflow-list" style="margin-top:12px"></div>
+
+      <div class="footer">
+        <div class="small">Previewed as Windows CRLF on export.</div>
+        <div><button id="undoBtn" class="btn">Undo</button></div>
+      </div>
+    </div>
+
+    <div class="pane" aria-label="Preview & details">
+      <strong>Preview</strong>
+      <pre id="preview" style="background:#fff;padding:8px;border-radius:6px;border:1px solid #eee;height:140px;overflow:auto;margin-top:8px"></pre>
+
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button id="exportPreviewBtn" class="btn">Download preview (.bat)</button>
+        <button id="copyPreviewBtn" class="btn">Copy to clipboard</button>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<!-- App logic separated -->
+<script src="app.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("Service Worker Registered"))
+    .catch(err => console.warn("SW Registration failed:", err));
+}
+</script>
+
+</body>
+</html>

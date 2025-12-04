@@ -1,0 +1,93 @@
+/* style.css - minimal custom styles for draggable windows and modal overlay */
+
+/* modal overlay used by openWindow() */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.28);
+  backdrop-filter: blur(2px);
+  opacity:0;
+  transition:opacity .18s ease;
+}
+.modal-overlay.show{opacity:1}
+
+/* window fade/scale */
+.window{
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  border-radius:6px;
+  overflow:hidden;
+  transform-origin:center center;
+  transition:opacity .18s ease, transform .18s ease;
+  background: linear-gradient(#f6f7fb, #eef1f7);
+  border:1px solid rgba(0,0,0,0.06);
+}
+.titlebar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:8px 10px;
+  background: linear-gradient(#2b6fb4, #1f57a3);
+  color:white;
+  -webkit-user-select:none;
+}
+.titlebar .titlebar-text{font-weight:700}
+.titlebar .titlebar-btn{background:transparent;border:none;color:white;font-weight:700;font-size:16px;padding:0 6px;cursor:pointer}
+
+/* window body */
+.window-body{background:transparent}
+.window-footer{background:transparent}
+
+/* small tweaks for 7.css elements inside windows */
+.window .btn{border-radius:6px;padding:8px 12px}
+
+/* icon placeholder small responsive */
+.icon-placeholder{background:transparent;border:1px dashed rgba(0,0,0,0.08);display:inline-flex;align-items:center;justify-content:center}
+/* modal background */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.25);
+  backdrop-filter: blur(2px);
+}
+
+/* popup smooth fade styling */
+.popup-window {
+  transition: opacity .18s ease, transform .18s ease;
+}
+@media (max-width: 700px) {
+  .app {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  aside.pane {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .cmd-tile {
+    padding: 12px;
+  }
+
+  .step-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .step-actions {
+    flex-direction: row !important;
+    justify-content: flex-end;
+  }
+
+  input {
+    width: 100%;
+    font-size: 16px; /* Fixes iOS zooming */
+  }
+
+  .bf-notification {
+    left: 6px !important;
+    right: 6px !important;
+    font-size: 14px;
+  }
+}
